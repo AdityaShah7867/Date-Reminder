@@ -17,12 +17,24 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
   const [showAllData, setShowAllData] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingAllEvents, setIsLoadingAllEvents] = useState(false);
+
   useEffect(() => {
     fetchEvents();
   }, []);
+
   const fetchAllEvents = async () => {
+    setIsLoadingAllEvents(true);
     try {
-      const response = await fetch('/api/all-events');
+      const response = await fetch('/api/all-events', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch all events');
       }
@@ -32,11 +44,21 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching all events:', error);
       toast.error('Failed to fetch all events');
+    } finally {
+      setIsLoadingAllEvents(false);
     }
   };
+
   const fetchEvents = async () => {
     try {
-      const response = await fetch('/api/events');
+      const response = await fetch('/api/events', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch events');
       }
@@ -54,6 +76,7 @@ export default function Home() {
       toast.error('Please select a date');
       return;
     }
+    setIsSubmitting(true);
     try {
       const eventData = eventType === 'birthday'
         ? { type: 'birthday', name, date: date.format('YYYY-MM-DD') }
@@ -75,6 +98,8 @@ export default function Home() {
     } catch (error) {
       console.error('Error adding event:', error);
       toast.error(`Error adding ${eventType}. Please try again.`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -95,7 +120,7 @@ export default function Home() {
         </h1>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="bg-white rounded-lg shadow-md p-4">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="mb-8">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700">Event Type</label>
                 <select
@@ -160,8 +185,8 @@ export default function Home() {
                   className="mt-1 block w-full"
                   value={date}
                   onChange={(newValue) => setDate(newValue)}
-                  renderInput={(params) => <input {...params} className="mt-1 block w-full px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />}
-                  disableFuture
+                  format="DD/MM/YYYY"
+                 
                 />
               </div>
               <button
